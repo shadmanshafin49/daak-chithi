@@ -13,7 +13,7 @@ Currently, it only runs on the **Expo Go app** :(.
 * Check your inbox
 * Share your address by copying the link
 * Receive anonymous messages from others and read them
-* Save messages as images (not sure why, but hey, it’s there!)
+* Save messages as images (idky)
 * Logout
 
 ---
@@ -21,9 +21,9 @@ Currently, it only runs on the **Expo Go app** :(.
 ### Known issues:
 
 * Runs on a local server only (no production server yet)
-* UI needs a serious glow-up — it’s rough around the edges
+* bad ui
 * Settings screen is almost empty (only has logout)
-* And many more bugs and quirks \:D
+* And many more bugs and quirks :DD
 
 ---
 
