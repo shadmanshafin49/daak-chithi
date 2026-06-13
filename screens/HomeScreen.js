@@ -14,6 +14,7 @@ import * as Font from 'expo-font';
 import * as Clipboard from 'expo-clipboard';
 import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { API_BASE_URL } from '../config';
 
 
 
@@ -57,7 +58,7 @@ const getGreeting = () => {
 };
 
 const handleShareAddress = () => {
-  const publicLink = `http://192.168.0.106:5000/${username}`;
+  const publicLink = `${API_BASE_URL}/${username}`;
   Clipboard.setStringAsync(publicLink);
   //Alert.alert('Copied!', 'Your public link has been copied to clipboard.');
 };

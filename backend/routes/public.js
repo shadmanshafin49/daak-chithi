@@ -7,6 +7,9 @@ const Message = require('../models/Message');
 router.get('/:username', async (req, res) => {
   const { username } = req.params;
 
+  console.log('🌐 Public route hit with username:', username);
+
+
   try {
     const user = await User.findOne({ username });
     if (!user) return res.status(404).send('User not found');

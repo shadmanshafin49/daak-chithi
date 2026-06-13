@@ -13,6 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import * as Font from 'expo-font';
+import { API_BASE_URL } from '../config';
 
 export default function SignUpScreen() {
   const [fontLoaded, setFontLoaded] = useState(false);
@@ -26,6 +27,8 @@ export default function SignUpScreen() {
   const logoTranslateY = useRef(new Animated.Value(300)).current;
   const textOpacity = useRef(new Animated.Value(0)).current;
   const formOpacity = useRef(new Animated.Value(0)).current;
+  const [showPasswords, setShowPasswords] = useState(false);
+
 
   const navigation = useNavigation();
 
@@ -46,7 +49,7 @@ export default function SignUpScreen() {
       Animated.sequence([
         Animated.timing(logoOpacity, {
           toValue: 1,
-          duration: 1400,
+          duration: 1000,
           useNativeDriver: true,
         }),
         Animated.timing(logoTranslateY, {
@@ -83,7 +86,7 @@ export default function SignUpScreen() {
 
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.0.106:5000/api/auth/signup', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password, repeatPassword }),
@@ -142,22 +145,33 @@ navigation.reset({
             value={username}
             onChangeText={setUsername}
           />
-          <TextInput
-            placeholder="Password"
-            placeholderTextColor="#a5a19d"
-            secureTextEntry
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-          />
-          <TextInput
-            placeholder="Repeat password"
-            placeholderTextColor="#a5a19d"
-            secureTextEntry
-            style={styles.input}
-            value={repeatPassword}
-            onChangeText={setRepeatPassword}
-          />
+          {/* Password Field */}
+<TextInput
+  placeholder="Password"
+  placeholderTextColor="#a5a19d"
+  secureTextEntry={!showPasswords}
+  style={styles.input}
+  value={password}
+  onChangeText={setPassword}
+/>
+
+{/* Repeat Password Field */}
+<TextInput
+  placeholder="Repeat password"
+  placeholderTextColor="#a5a19d"
+  secureTextEntry={!showPasswords}
+  style={styles.input}
+  value={repeatPassword}
+  onChangeText={setRepeatPassword}
+/>
+
+{/* Toggle Visibility Text */}
+<TouchableOpacity onPress={() => setShowPasswords(prev => !prev)}>
+  <Text style={{ color: '#b73430', fontFamily: 'Glacial-Regular', marginBottom: 10, marginTop: -5   }}>
+    {showPasswords ? 'Hide passwords' : 'Show passwords'}
+  </Text>
+</TouchableOpacity>
+
           <TextInput
             placeholder="Email"
             placeholderTextColor="#a5a19d"

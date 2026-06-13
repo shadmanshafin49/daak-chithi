@@ -30,8 +30,18 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# Environment / secrets — keep these out of git, but track the .example template.
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# Editor / IDE
+.vscode/
+.idea/
 
 # typescript
 *.tsbuildinfo

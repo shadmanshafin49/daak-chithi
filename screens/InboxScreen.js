@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
+import { API_BASE_URL } from '../config';
 
 export default function InboxScreen({ route, navigation }) {
   const { username } = route.params || { username: null };
@@ -21,7 +22,7 @@ export default function InboxScreen({ route, navigation }) {
 
   const fetchMessages = async () => {
     try {
-      const response = await fetch(`http://192.168.0.106:5000/api/messages/${username}`);
+      const response = await fetch(`${API_BASE_URL}/api/messages/${username}`);
       if (!response.ok) throw new Error('Failed to fetch messages');
       const data = await response.json();
       //console.log('Fetched messages:', data.messages);
@@ -38,7 +39,7 @@ export default function InboxScreen({ route, navigation }) {
 
   const onMessagePress = async (msg) => {
   try {
-    await fetch(`http://192.168.0.106:5000/api/messages/${msg._id}/read`, {
+    await fetch(`${API_BASE_URL}/api/messages/${msg._id}/read`, {
       method: 'PATCH',
     });
 

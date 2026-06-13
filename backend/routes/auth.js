@@ -88,6 +88,9 @@ router.post('/signup', async (req, res) => {
   }
 });
 
+router.get('/test', (req, res) => {
+  res.send('Auth route working');
+});
 
 
 

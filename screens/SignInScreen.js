@@ -14,6 +14,7 @@ import {
 import * as Font from 'expo-font';
 
 import { useNavigation } from '@react-navigation/native';
+import { API_BASE_URL } from '../config';
 
 export default function SignInScreen() {
       const navigation = useNavigation();
@@ -25,6 +26,8 @@ const [loading, setLoading] = useState(false);
 
   const textOpacity = useRef(new Animated.Value(0)).current;
   const formOpacity = useRef(new Animated.Value(0)).current;
+  const [showPassword, setShowPassword] = useState(false);
+
 
 
   useEffect(() => {
@@ -67,7 +70,7 @@ const signIn = async () => {
 
   setLoading(true);
   try {
-const response = await fetch('http://192.168.0.106:5000/api/auth/login', {
+const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
 body: JSON.stringify({ usernameOrEmail: identifier, password }),
@@ -127,14 +130,37 @@ navigation.reset({
   value={identifier}
   onChangeText={setIdentifier}
 />
-<TextInput
-  placeholder="Password"
-  placeholderTextColor="#a5a19d"
-  secureTextEntry
-  style={styles.input}
-  value={password}
-  onChangeText={setPassword}
-/>
+<View style={{ width: '100%', position: 'relative' }}>
+  <TextInput
+    placeholder="Password"
+    placeholderTextColor="#a5a19d"
+    secureTextEntry={!showPassword}
+    style={[styles.input, { paddingRight: 45 }]}
+    value={password}
+    onChangeText={setPassword}
+  />
+  <TouchableOpacity
+    onPress={() => setShowPassword(prev => !prev)}
+    style={{
+      position: 'absolute',
+      right: 10,
+      top: 7,
+      padding: 5,
+    }}
+  >
+    <Image
+      source={
+        showPassword
+          ? require('../assets/hide_password.png')
+          : require('../assets/show_password.png')
+      }
+      style={{ width: 20, height: 20 }}
+      resizeMode="contain"
+    />
+  </TouchableOpacity>
+</View>
+
+
 
 
           <TouchableOpacity
@@ -149,7 +175,7 @@ navigation.reset({
           <Text style={styles.linkText}>Reset password</Text>
 
           <View style={{ flexDirection: 'row', marginTop: 12 }}>
-            <Text style={styles.linkText}>Don’t have an Account? </Text>
+            <Text style={styles.linkText}>Don’t have an account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
               <Text style={[styles.linkText, { color: '#b73430' }]}>Sign up</Text>
             </TouchableOpacity>
