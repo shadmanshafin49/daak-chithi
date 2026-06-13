@@ -21,16 +21,18 @@ fixed.
   `maxWidth` caps (420 on auth forms, 480 on home buttons). *(Module 2)*
 - **README merge conflict on push.** GitHub had a separately-pushed README that collided
   with the new dev-setup one during rebase; merged both versions by hand.
+- **MongoDB credentials leaked to GitHub.** The original `backend/.env` (with a live
+  `MONGO_URI` incl. DB password) was committed in the initial commit and remained in
+  history. Fixed in full: (1) untracked the file and added `.env` rules to `.gitignore`,
+  (2) **rotated the Atlas DB password**, (3) scrubbed `backend/.env` from *all* history
+  with `git filter-repo` and force-pushed. Verified the old password string no longer
+  appears in any commit. A local pre-scrub backup bundle exists outside the repo.
 
 ---
 
 ## ❗ Open / unsolved
 
 ### Security / privacy
-- **MongoDB credentials leaked in git history.** The old `backend/.env` (with a live
-  `MONGO_URI`) was committed before being untracked. Removing the file does **not** scrub
-  it from history — it's still readable in older commits on GitHub. **Action: rotate the
-  Atlas DB password.** History rewrite (BFG/filter-repo) optional.
 - **Inbox is world-readable.** `GET /api/messages/:username` lets anyone fetch anyone's
   letters by guessing a username — no auth. *(Module 6)*
 - **No server-side abuse protection.** Public send route has no rate limiting, no real
