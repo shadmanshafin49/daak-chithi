@@ -10,6 +10,7 @@ import {
   Share,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
@@ -18,6 +19,7 @@ import * as IntentLauncher from 'expo-intent-launcher';
 export default function LetterViewScreen({ route }) {
   const message = route.params?.message ?? '';
   const viewRef = useRef();
+  const insets = useSafeAreaInsets();
 
   let fontSize = 14;
   if (message.length > 554) fontSize = 10;
@@ -83,7 +85,7 @@ export default function LetterViewScreen({ route }) {
   };
 
   return (
-  <ScrollView contentContainerStyle={styles.container}>
+  <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 40 }]}>
     {/* ViewShot target */}
     <View ref={viewRef} collapsable={false} style={styles.letterWrapper}>
 

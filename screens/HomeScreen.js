@@ -14,6 +14,7 @@ import * as Font from 'expo-font';
 import * as Clipboard from 'expo-clipboard';
 import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { API_BASE_URL } from '../config';
 
 
@@ -23,6 +24,7 @@ export default function HomeScreen({ route }) {
   const { username } = route.params || { username: 'User' };
 
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   const [fontLoaded, setFontLoaded] = useState(false);
   const textOpacity = useRef(new Animated.Value(0)).current;
@@ -72,7 +74,7 @@ const handleShareAddress = () => {
     >
 
       {/* TOP BAR with Settings Button */}
-  <View style={styles.topBar}>
+  <View style={[styles.topBar, { paddingTop: insets.top + 12 }]}>
     <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
       <Image
         source={require('../assets/settings.png')}
@@ -149,6 +151,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     width: '100%',
+    maxWidth: 480,
     marginBottom: 20,
   },
   icon: {
@@ -178,10 +181,9 @@ const styles = StyleSheet.create({
 
   topBar: {
   width: '100%',
-  paddingHorizontal: 340,
-  paddingTop: 50,
+  paddingHorizontal: 20,
   flexDirection: 'row',
-  justifyContent: 'flex-start',
+  justifyContent: 'flex-end',
 },
 
 settingsIcon: {

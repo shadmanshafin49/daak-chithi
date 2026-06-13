@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
 import SignUpScreen from './screens/SignUpScreen';
@@ -34,24 +35,26 @@ export default function App() {
 
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="SignUp"
-        screenOptions={{ headerShown: false }}
-      >
-        <Stack.Screen name="SignUp" component={SignUpScreen} />
-        <Stack.Screen name="SignIn" component={SignInScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Inbox" component={InboxScreen} />
-        
-        <Stack.Screen
-          name="LetterView"
-          component={LetterViewScreen}
-          options={{ title: 'Your Letter' }}
-        />
-        <Stack.Screen name="Settings" component={SettingsScreen} />
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="SignUp"
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen name="SignUp" component={SignUpScreen} />
+          <Stack.Screen name="SignIn" component={SignInScreen} />
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Inbox" component={InboxScreen} />
 
-      </Stack.Navigator>
-    </NavigationContainer>
+          <Stack.Screen
+            name="LetterView"
+            component={LetterViewScreen}
+            options={{ title: 'Your Letter' }}
+          />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
+
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }

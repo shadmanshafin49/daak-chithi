@@ -7,10 +7,12 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { API_BASE_URL } from '../config';
 
 export default function InboxScreen({ route, navigation }) {
   const { username } = route.params || { username: null };
+  const insets = useSafeAreaInsets();
 
   const [messages, setMessages] = useState([]);
   const [readMessages, setReadMessages] = useState([]);
@@ -59,7 +61,7 @@ export default function InboxScreen({ route, navigation }) {
 
   if (showMessage) {
   return (
-    <View style={styles.messageContainer}>
+    <View style={[styles.messageContainer, { paddingTop: insets.top + 20 }]}>
       <Text style={styles.fullMessageText}>{currentMessage}</Text>
       <TouchableOpacity style={styles.backButton} onPress={handleBackToList}>
         <Text style={styles.backButtonText}>Back</Text>
@@ -70,7 +72,7 @@ export default function InboxScreen({ route, navigation }) {
 
 
   return (
-  <ScrollView contentContainerStyle={styles.gridContainer}>
+  <ScrollView contentContainerStyle={[styles.gridContainer, { paddingTop: insets.top + 10 }]}>
     {messages.map((msg) => {
         //console.log('Message object:', msg);
       const isRead = readMessages.includes(msg._id);
