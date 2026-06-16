@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,12 @@ import {
   Image,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { API_BASE_URL } from '../config';
+import { authHeaders } from '../auth';
 
 export default function InboxScreen({ route, navigation }) {
   const { username } = route.params || { username: null };
@@ -18,40 +21,57 @@ export default function InboxScreen({ route, navigation }) {
   const [readMessages, setReadMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [showMessage, setShowMessage] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-  if (!username) return;
-
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/messages/${username}`);
+      const headers = await authHeaders();
+      const response = await fetch(`${API_BASE_URL}/api/messages`, { headers });
+      if (response.status === 401) {
+        setError('Your session has expired. Please log in again.');
+        return;
+      }
       if (!response.ok) throw new Error('Failed to fetch messages');
       const data = await response.json();
-      //console.log('Fetched messages:', data.messages);
       setMessages(data.messages || []);
       const readIds = (data.messages || []).filter((msg) => msg.read).map((m) => m._id);
       setReadMessages(readIds);
-    } catch (error) {
-      console.error(error);
+      setError(null);
+    } catch (err) {
+      console.error(err);
+      setError('Couldn’t reach the server. Check your connection and try again.');
+    } finally {
+      setLoading(false);
     }
+  }, []);
+
+  const retry = () => {
+    setLoading(true);
+    fetchMessages();
   };
 
-    fetchMessages();
-  }, [username]);
+  // Refetch when the screen regains focus, and poll while focused so new letters
+  // show up without having to log out and back in.
+  useFocusEffect(
+    useCallback(() => {
+      fetchMessages();
+      const intervalId = setInterval(fetchMessages, 12000);
+      return () => clearInterval(intervalId);
+    }, [fetchMessages])
+  );
 
-  const onMessagePress = async (msg) => {
-  try {
-    await fetch(`${API_BASE_URL}/api/messages/${msg._id}/read`, {
-      method: 'PATCH',
-    });
-
-    setReadMessages((prev) => [...prev, msg._id]);
-    setCurrentMessage(msg.text);
-    setShowMessage(true);
-  } catch (error) {
-    console.error('Failed to mark as read:', error);
-  }
-};
+  // Persist read status to the server (optimistically update locally first) so it
+  // survives leaving and re-entering the inbox.
+  const markRead = async (msgId) => {
+    setReadMessages((prev) => (prev.includes(msgId) ? prev : [...prev, msgId]));
+    try {
+      const headers = await authHeaders();
+      await fetch(`${API_BASE_URL}/api/messages/${msgId}/read`, { method: 'PATCH', headers });
+    } catch (error) {
+      console.error('Failed to mark as read:', error);
+    }
+  };
 
 
   const handleBackToList = () => {
@@ -71,8 +91,48 @@ export default function InboxScreen({ route, navigation }) {
 }
 
 
+  const topPad = insets.top + 10;
+
+  // Initial load — spinner instead of a blank screen.
+  if (loading && messages.length === 0) {
+    return (
+      <View style={[styles.stateContainer, { paddingTop: topPad }]}>
+        <ActivityIndicator size="large" color="#b73430" />
+        <Text style={styles.stateSubtitle}>Loading your letters…</Text>
+      </View>
+    );
+  }
+
+  // Error with nothing cached to show — friendly message + retry.
+  if (error && messages.length === 0) {
+    return (
+      <View style={[styles.stateContainer, { paddingTop: topPad }]}>
+        <Text style={styles.stateTitle}>Couldn’t load your letters</Text>
+        <Text style={styles.stateSubtitle}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={retry}>
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Empty inbox.
+  if (messages.length === 0) {
+    return (
+      <View style={[styles.stateContainer, { paddingTop: topPad }]}>
+        <Text style={styles.stateTitle}>No letters yet</Text>
+        <Text style={styles.stateSubtitle}>
+          Share your link and the anonymous letters you receive will appear here.
+        </Text>
+      </View>
+    );
+  }
+
   return (
-  <ScrollView contentContainerStyle={[styles.gridContainer, { paddingTop: insets.top + 10 }]}>
+  <ScrollView
+    style={styles.gridScroll}
+    contentContainerStyle={[styles.gridContainer, { paddingTop: topPad }]}
+  >
     {messages.map((msg) => {
         //console.log('Message object:', msg);
       const isRead = readMessages.includes(msg._id);
@@ -82,9 +142,8 @@ export default function InboxScreen({ route, navigation }) {
           key={msg._id}
           style={styles.iconButton}
           onPress={() => {
-  //console.log('Opening message:', msg.text);
-  setReadMessages((prev) => [...prev, msg._id]);
-navigation.navigate('LetterView', { message: msg.message || msg.text || '' });
+  markRead(msg._id);
+  navigation.navigate('LetterView', { message: msg.message || msg.text || '' });
 }}
 
 
@@ -159,10 +218,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#b73430',
   },
+  gridScroll: {
+  backgroundColor: '#e9dec8',
+},
   gridContainer: {
+  flexGrow: 1,
   flexDirection: 'row',
   flexWrap: 'wrap',
   justifyContent: 'center',
+  alignContent: 'flex-start',
   padding: 10,
   gap: 15, // Optional if using React Native 0.71+
 },
@@ -177,6 +241,41 @@ iconImage: {
   width: 70,
   height: 70,
   resizeMode: 'contain',
+},
+
+stateContainer: {
+  flex: 1,
+  backgroundColor: '#e9dec8',
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingHorizontal: 40,
+},
+stateTitle: {
+  fontSize: 20,
+  fontFamily: 'Glacial-Regular',
+  color: '#302f2e',
+  marginBottom: 10,
+  textAlign: 'center',
+},
+stateSubtitle: {
+  fontSize: 15,
+  fontFamily: 'Glacial-Regular',
+  color: '#6b655c',
+  textAlign: 'center',
+  marginTop: 10,
+  lineHeight: 22,
+},
+retryButton: {
+  marginTop: 24,
+  backgroundColor: '#b73430',
+  paddingVertical: 12,
+  paddingHorizontal: 30,
+  borderRadius: 12,
+},
+retryText: {
+  color: '#fff',
+  fontFamily: 'Glacial-Regular',
+  fontSize: 15,
 },
 
 });

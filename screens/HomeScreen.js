@@ -7,10 +7,7 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
-import * as Font from 'expo-font';
 import * as Clipboard from 'expo-clipboard';
 import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -26,30 +23,15 @@ export default function HomeScreen({ route }) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
-  const [fontLoaded, setFontLoaded] = useState(false);
   const textOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const loadFont = async () => {
-      await Font.loadAsync({
-        'Glacial-Regular': require('../assets/fonts/GlacialIndifference-Regular.ttf'),
-      });
-      setFontLoaded(true);
-    };
-    loadFont();
+    Animated.timing(textOpacity, {
+      toValue: 1,
+      duration: 350,
+      useNativeDriver: true,
+    }).start();
   }, []);
-
-  useEffect(() => {
-    if (fontLoaded) {
-      Animated.timing(textOpacity, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [fontLoaded]);
-
-  if (!fontLoaded) return null;
 
 
 const getGreeting = () => {
@@ -67,11 +49,7 @@ const handleShareAddress = () => {
 
 
   return (
-    <KeyboardAvoidingView
-      style={styles.keyboardView}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}
-    >
+    <View style={styles.keyboardView}>
 
       {/* TOP BAR with Settings Button */}
   <View style={[styles.topBar, { paddingTop: insets.top + 12 }]}>
@@ -85,7 +63,7 @@ const handleShareAddress = () => {
 
 
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 30 }]}
         showsVerticalScrollIndicator={false}
       >
 <Animated.Text style={[styles.welcomeText, { opacity: textOpacity }]}>
@@ -122,7 +100,7 @@ const handleShareAddress = () => {
         {/* Footer */}
         <Text style={styles.footerText}>About us</Text>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

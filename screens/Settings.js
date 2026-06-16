@@ -1,15 +1,16 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { clearAuth } from '../auth';
 
 export default function SettingsScreen() {
   const navigation = useNavigation();
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem('loggedInUser'); // remove stored session
-      navigation.replace('SignIn'); // navigate to SignIn screen
+      await clearAuth(); // clear the persisted JWT + username
+      // Reset the stack so back/auto-login won't return to the logged-in area.
+      navigation.reset({ index: 0, routes: [{ name: 'SignIn' }] });
     } catch (error) {
       Alert.alert('Error', 'Failed to log out.');
       console.error('Logout error:', error);
@@ -18,8 +19,6 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
-
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>

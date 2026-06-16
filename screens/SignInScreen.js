@@ -10,18 +10,19 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
-import * as Font from 'expo-font';
 
 import { useNavigation } from '@react-navigation/native';
 import { API_BASE_URL } from '../config';
+import { saveAuth } from '../auth';
 
 export default function SignInScreen() {
       const navigation = useNavigation();
-  const [fontLoaded, setFontLoaded] = useState(false);
       const [identifier, setIdentifier] = useState('');
 const [password, setPassword] = useState('');
 const [loading, setLoading] = useState(false);
+const [error, setError] = useState('');
 
 
   const textOpacity = useRef(new Animated.Value(0)).current;
@@ -31,43 +32,31 @@ const [loading, setLoading] = useState(false);
 
 
   useEffect(() => {
-    const loadFont = async () => {
-      await Font.loadAsync({
-        'Glacial-Regular': require('../assets/fonts/GlacialIndifference-Regular.ttf'),
-      });
-      setFontLoaded(true);
-    };
-    loadFont();
+    Animated.parallel([
+      Animated.timing(textOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(formOpacity, {
+        toValue: 1,
+        duration: 400,
+        delay: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, []);
-
-  useEffect(() => {
-    if (fontLoaded) {
-      Animated.sequence([
-        Animated.timing(textOpacity, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-        Animated.timing(formOpacity, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [fontLoaded]);
-
-  if (!fontLoaded) return null;
 
 
 
 
 const signIn = async () => {
   if (!identifier || !password) {
-    alert('Please fill in both fields.');
+    setError('Please fill in both fields.');
     return;
   }
 
+  setError('');
   setLoading(true);
   try {
 const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -82,17 +71,17 @@ body: JSON.stringify({ usernameOrEmail: identifier, password }),
     // Now try to parse JSON only if response.ok
     if (response.ok) {
   const data = JSON.parse(text);
-  //alert(`Welcome back, ${data.user.username}`);
+  await saveAuth(data.token, data.user.username);
 navigation.reset({
   index: 0,
   routes: [{ name: 'Home', params: { username: data.user.username } }],
 });
 
     } else {
-      alert('Invalid credentials');
+      setError('Invalid username/email or password.');
     }
   } catch (error) {
-    alert('Error connecting to server.');
+    setError('Couldn’t reach the server. Check your connection and try again.');
     console.error(error);
   } finally {
     setLoading(false);
@@ -163,12 +152,18 @@ navigation.reset({
 
 
 
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
           <TouchableOpacity
   style={styles.button}
   onPress={signIn}
   disabled={loading}
 >
-  <Text style={styles.buttonText}>{loading ? 'Logging in...' : 'Log in'}</Text>
+  {loading ? (
+    <ActivityIndicator color="#fff" />
+  ) : (
+    <Text style={styles.buttonText}>Log in</Text>
+  )}
 </TouchableOpacity>
 
 
@@ -222,6 +217,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: 'Glacial-Regular',
     fontSize: 15,
+  },
+  errorText: {
+    color: '#b73430',
+    fontFamily: 'Glacial-Regular',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 6,
+    width: '100%',
   },
   linkText: {
     marginTop: 15,

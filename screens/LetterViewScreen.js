@@ -9,6 +9,7 @@ import {
   Platform,
   Share,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
@@ -20,6 +21,15 @@ export default function LetterViewScreen({ route }) {
   const message = route.params?.message ?? '';
   const viewRef = useRef();
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+
+  // Size the letter to fit the screen vertically (it's a tall portrait page),
+  // leaving room for the action buttons + safe-area insets, instead of letting
+  // it overflow off-screen.
+  const ASPECT = 1294 / 2800; // width / height of the letter image
+  const maxLetterHeight = height - insets.top - insets.bottom - 150;
+  const letterWidth = Math.min(width * 0.92, maxLetterHeight * ASPECT);
+  const letterHeight = letterWidth / ASPECT;
 
   let fontSize = 14;
   if (message.length > 554) fontSize = 10;
@@ -87,7 +97,7 @@ export default function LetterViewScreen({ route }) {
   return (
   <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 40 }]}>
     {/* ViewShot target */}
-    <View ref={viewRef} collapsable={false} style={styles.letterWrapper}>
+    <View ref={viewRef} collapsable={false} style={[styles.letterWrapper, { width: letterWidth, height: letterHeight }]}>
 
       <Image
         source={require('../assets/letter_page.png')}
@@ -120,14 +130,11 @@ const styles = StyleSheet.create({
   },
   letterWrapper: {
     position: 'relative',
-    width: '90%',
-    maxWidth: 390,
-    aspectRatio: 1294 / 2800,
+    // width/height are set dynamically to fit the screen (see component)
   },
   letterImage: {
     width: '100%',
-    height: undefined,
-    aspectRatio: 1294 / 2800,
+    height: '100%',
     resizeMode: 'contain',
   },
   letterText: {

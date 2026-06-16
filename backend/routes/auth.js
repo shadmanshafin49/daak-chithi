@@ -2,6 +2,11 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+// Sign a 30-day JWT for a user id.
+const signToken = (userId) =>
+  jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
@@ -26,6 +31,7 @@ router.post('/login', async (req, res) => {
 
     res.status(200).json({
       message: 'Login successful',
+      token: signToken(user._id),
       user: {
         id: user._id,
         username: user.username,
@@ -75,6 +81,7 @@ router.post('/signup', async (req, res) => {
 
     res.status(201).json({
       message: 'User registered successfully',
+      token: signToken(newUser._id),
       user: {
         id: newUser._id,
         username: newUser.username,

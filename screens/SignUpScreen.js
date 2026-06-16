@@ -11,17 +11,18 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
-import * as Font from 'expo-font';
 import { API_BASE_URL } from '../config';
+import { saveAuth } from '../auth';
 
 export default function SignUpScreen() {
-  const [fontLoaded, setFontLoaded] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const logoTranslateY = useRef(new Animated.Value(300)).current;
@@ -32,58 +33,45 @@ export default function SignUpScreen() {
 
   const navigation = useNavigation();
 
-  // Load font
+  // Quick, staggered intro animation on mount (fonts are already loaded in App.js).
   useEffect(() => {
-    const loadFont = async () => {
-      await Font.loadAsync({
-        'Glacial-Regular': require('../assets/fonts/GlacialIndifference-Regular.ttf'),
-      });
-      setFontLoaded(true);
-    };
-    loadFont();
+    Animated.parallel([
+      Animated.timing(logoOpacity, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(logoTranslateY, {
+        toValue: 100,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(textOpacity, {
+        toValue: 1,
+        duration: 400,
+        delay: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(formOpacity, {
+        toValue: 1,
+        duration: 450,
+        delay: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, []);
-
-  // Run animations once font is loaded
-  useEffect(() => {
-    if (fontLoaded) {
-      Animated.sequence([
-        Animated.timing(logoOpacity, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(logoTranslateY, {
-          toValue: 100,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(textOpacity, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-        Animated.timing(formOpacity, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [fontLoaded]);
-
-  // Early return (after all hooks)
-  if (!fontLoaded) return null;
 
   const signUp = async () => {
     if (!username || !email || !password || !repeatPassword) {
-      alert('Please fill all fields.');
+      setError('Please fill all fields.');
       return;
     }
     if (password !== repeatPassword) {
-      alert('Passwords do not match.');
+      setError('Passwords do not match.');
       return;
     }
 
+    setError('');
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
@@ -95,16 +83,16 @@ export default function SignUpScreen() {
       const data = await response.json();
 
       if (response.status === 201) {
-        //alert(`Signup successful! Welcome, ${data.user.username}`);
+        await saveAuth(data.token, data.user?.username || username);
 navigation.reset({
   index: 0,
   routes: [{ name: 'Home', params: { username } }],
 });
       } else {
-        alert('Signup failed: ' + data.message);
+        setError(data.message || 'Signup failed. Please try again.');
       }
     } catch (error) {
-      alert('Error connecting to server.');
+      setError('Couldn’t reach the server. Check your connection and try again.');
       console.error(error);
     } finally {
       setLoading(false);
@@ -181,8 +169,14 @@ navigation.reset({
             onChangeText={setEmail}
           />
 
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
           <TouchableOpacity style={styles.button} onPress={signUp} disabled={loading}>
-            <Text style={styles.buttonText}>{loading ? 'Signing up...' : 'Sign up'}</Text>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Sign up</Text>
+            )}
           </TouchableOpacity>
 
           <View style={{ flexDirection: 'row', marginTop: 15 }}>
@@ -251,6 +245,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: 'Glacial-Regular',
     fontSize: 15,
+  },
+  errorText: {
+    color: '#b73430',
+    fontFamily: 'Glacial-Regular',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 6,
+    width: '100%',
   },
   signInText: {
     marginTop: 15,
